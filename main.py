@@ -74,77 +74,153 @@ if are_files_equal:
 else:
     print("Schemas are not identical.")
 
-##
+## WORKING CODE FOR 2 DBs
+
+# import json
+# import openpyxl
+
+# # Load schema information from JSON files
+# with open(json_filename_1, 'r') as json_file:
+#     schema_info_1 = json.load(json_file)
+
+# with open(json_filename_2, 'r') as json_file:
+#     schema_info_2 = json.load(json_file)
+
+# # Create an Excel workbook and sheet
+# workbook = openpyxl.Workbook()
+# sheet = workbook.active
+# sheet.title = "Schema Comparison"
+
+# # Set headers
+# sheet["A1"] = "Schema"
+# sheet["B1"] = "Table Name"
+# sheet["C1"] = "Type of Error"
+# sheet["D1"] = "Name of Column"
+# sheet["E1"] = f"Source DB: {databases[0]} Specification"
+# sheet["F1"] = f"Test DB: {databases[1]} Specification"
+
+# row = 2  # Start from the second row
+
+# for schema in schema_info_1:
+#     for table_name in schema_info_1[schema]:
+#         columns_1 = schema_info_1[schema][table_name]
+#         columns_2 = schema_info_2[schema].get(table_name, [])
+
+#         for col_info_1 in columns_1:
+#             col_name_1 = col_info_1["column_name"]
+#             col_info_2 = next((col for col in columns_2 if col["column_name"] == col_name_1), None)
+
+#             if col_info_2 is None:
+#                 sheet[f"A{row}"] = schema
+#                 sheet[f"B{row}"] = table_name
+#                 sheet[f"C{row}"] = "Missing Column"
+#                 sheet[f"D{row}"] = col_name_1
+#                 sheet[f"E{row}"] = str(col_info_1)
+#                 sheet[f"F{row}"] = ""
+#                 sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="ffd6ca", end_color="ffd6ca", fill_type="solid")
+#                 row += 1
+#             elif col_info_1 != col_info_2:
+#                 sheet[f"A{row}"] = schema
+#                 sheet[f"B{row}"] = table_name
+#                 sheet[f"C{row}"] = "Different Specification"
+#                 sheet[f"D{row}"] = col_name_1
+#                 sheet[f"E{row}"] = str(col_info_1)
+#                 sheet[f"F{row}"] = str(col_info_2)
+#                 sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="e7d4f2", end_color="e7d4f2", fill_type="solid")
+#                 row += 1
+
+#         for col_info_2 in columns_2:
+#             col_name_2 = col_info_2["column_name"]
+#             col_info_1 = next((col for col in columns_1 if col["column_name"] == col_name_2), None)
+
+#             if col_info_1 is None:
+#                 sheet[f"A{row}"] = schema
+#                 sheet[f"B{row}"] = table_name
+#                 sheet[f"C{row}"] = "Missing Column"
+#                 sheet[f"D{row}"] = col_name_2
+#                 sheet[f"E{row}"] = ""
+#                 sheet[f"F{row}"] = str(col_info_2)
+#                 sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="ffd6ca", end_color="ffd6ca", fill_type="solid")
+#                 row += 1
+
+# # Save the Excel file
+# excel_filename = "schema_comparison_report.xlsx"
+# workbook.save(excel_filename)
+
+# print(f"Schema comparison report saved to {excel_filename}")
+
+
+### MULTI DB
+############
 
 import json
 import openpyxl
 
-# Load schema information from JSON files
-with open(json_filename_1, 'r') as json_file:
-    schema_info_1 = json.load(json_file)
+# Load schema information from the source JSON file
+source_database = 'DB_PRMITR_ERP_20230701'
+source_json_filename = f'schema_information_{source_database}.json'
 
-with open(json_filename_2, 'r') as json_file:
-    schema_info_2 = json.load(json_file)
+with open(source_json_filename, 'r') as json_file:
+    source_schema_info = json.load(json_file)
+
+# List of target databases
+target_databases = ['DB_PRMITR_ERP_20230615', 'DB_PRMITR_ERP_20230715', 'DB_PRMITR_ERP_20230601']  # Add more databases as needed
 
 # Create an Excel workbook and sheet
 workbook = openpyxl.Workbook()
-sheet = workbook.active
-sheet.title = "Schema Comparison"
 
-# Set headers
-sheet["A1"] = "Schema"
-sheet["B1"] = "Table Name"
-sheet["C1"] = "Type of Error"
-sheet["D1"] = "Name of Column"
-sheet["E1"] = f"Source DB: {databases[0]} Specification"
-sheet["F1"] = f"Test DB: {databases[1]} Specification"
+for target_database in target_databases:
+    sheet = workbook.create_sheet(title=target_database)  # Create a new sheet for each target database
 
-row = 2  # Start from the second row
+    # Set headers
+    sheet["A1"] = "Schema"
+    sheet["B1"] = "Table"
+    sheet["C1"] = "Type"
+    sheet["D1"] = "Name"
+    sheet["E1"] = f"Specification in {source_database}"
+    sheet["F1"] = f"Specification in {target_database}"
 
-for schema in schema_info_1:
-    for table_name in schema_info_1[schema]:
-        columns_1 = schema_info_1[schema][table_name]
-        columns_2 = schema_info_2[schema].get(table_name, [])
+    row = 2  # Start from the second row
 
-        for col_info_1 in columns_1:
-            col_name_1 = col_info_1["column_name"]
-            col_info_2 = next((col for col in columns_2 if col["column_name"] == col_name_1), None)
+    target_json_filename = f'schema_information_{target_database}.json'
 
-            if col_info_2 is None:
-                sheet[f"A{row}"] = schema
-                sheet[f"B{row}"] = table_name
-                sheet[f"C{row}"] = "Missing Column"
-                sheet[f"D{row}"] = col_name_1
-                sheet[f"E{row}"] = str(col_info_1)
-                sheet[f"F{row}"] = ""
-                sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="ffd6ca", end_color="ffd6ca", fill_type="solid")
-                row += 1
-            elif col_info_1 != col_info_2:
-                sheet[f"A{row}"] = schema
-                sheet[f"B{row}"] = table_name
-                sheet[f"C{row}"] = "Different Specification"
-                sheet[f"D{row}"] = col_name_1
-                sheet[f"E{row}"] = str(col_info_1)
-                sheet[f"F{row}"] = str(col_info_2)
-                sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="e7d4f2", end_color="e7d4f2", fill_type="solid")
-                row += 1
+    with open(target_json_filename, 'r') as json_file:
+        target_schema_info = json.load(json_file)
 
-        for col_info_2 in columns_2:
-            col_name_2 = col_info_2["column_name"]
-            col_info_1 = next((col for col in columns_1 if col["column_name"] == col_name_2), None)
+    for schema in source_schema_info:
+        for table_name in source_schema_info[schema]:
+            source_columns = source_schema_info[schema][table_name]
+            target_columns = target_schema_info[schema].get(table_name, [])
 
-            if col_info_1 is None:
-                sheet[f"A{row}"] = schema
-                sheet[f"B{row}"] = table_name
-                sheet[f"C{row}"] = "Missing Column"
-                sheet[f"D{row}"] = col_name_2
-                sheet[f"E{row}"] = ""
-                sheet[f"F{row}"] = str(col_info_2)
-                sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="ffd6ca", end_color="ffd6ca", fill_type="solid")
-                row += 1
+            for col_info_source in source_columns:
+                col_name_source = col_info_source["column_name"]
+                col_info_target = next((col for col in target_columns if col["column_name"] == col_name_source), None)
+
+                if col_info_target is None:
+                    sheet[f"A{row}"] = schema
+                    sheet[f"B{row}"] = table_name
+                    sheet[f"C{row}"] = "Missing Column"
+                    sheet[f"D{row}"] = col_name_source
+                    sheet[f"E{row}"] = str(col_info_source)
+                    sheet[f"F{row}"] = ""
+                    sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="E6B8B7", end_color="E6B8B7", fill_type="solid")
+                    row += 1
+                elif col_info_source != col_info_target:
+                    sheet[f"A{row}"] = schema
+                    sheet[f"B{row}"] = table_name
+                    sheet[f"C{row}"] = "Different Specification"
+                    sheet[f"D{row}"] = col_name_source
+                    sheet[f"E{row}"] = str(col_info_source)
+                    sheet[f"F{row}"] = str(col_info_target)
+                    sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="CCC0DA", end_color="CCC0DA", fill_type="solid")
+                    row += 1
+
+    print(f"Comparison report generated for {target_database}")
 
 # Save the Excel file
 excel_filename = "schema_comparison_report.xlsx"
+workbook.remove(workbook.active)  # Remove the default sheet
 workbook.save(excel_filename)
 
 print(f"Schema comparison report saved to {excel_filename}")
+
