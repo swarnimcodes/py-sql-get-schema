@@ -74,73 +74,7 @@ if are_files_equal:
 else:
     print("Schemas are not identical.")
 
-
-# ###############
-# import difflib
-# json_source_contents = open(json_filename_1, "r").read()
-# json_test_contents = open(json_filename_2, "r").read()
-
-# html_diff = difflib.HtmlDiff(tabsize=4, wrapcolumn=72).make_file(
-#     json_source_contents.splitlines(),
-#     json_test_contents.splitlines(),
-#     context=True,
-#     numlines=1,
-#     charset='utf-8'
-# )
-
-# diff_filename = "schema diff.html"
-# with open(diff_filename, "w", encoding="utf-8") as diff_file:
-#     diff_file.write(html_diff)
-
-#################
-
-
-# # Load schema information from JSON files
-# with open(json_filename_1, 'r') as json_file:
-#     schema_info_1 = json.load(json_file)
-
-# with open(json_filename_2, 'r') as json_file:
-#     schema_info_2 = json.load(json_file)
-
-# # Compare schemas and generate HTML report
-# html_report = "<html><head><title>Database Schema Comparison</title></head><body>"
-
-# for schema in schema_info_1:
-#     schema_diff_found = False
-
-#     for table_name in schema_info_1[schema]:
-#         if table_name in schema_info_2.get(schema, {}):
-#             columns_1 = schema_info_1[schema][table_name]
-#             columns_2 = schema_info_2[schema][table_name]
-
-#             if columns_1 != columns_2:
-#                 if not schema_diff_found:
-#                     html_report += f"<h2>Schema: {schema}</h2>"
-#                     schema_diff_found = True
-
-#                 html_report += f"<h3>Table: {table_name}</h3>"
-#                 html_report += "<p style='color: red;'>Columns do not match.</p>"
-
-#                 for col_info_1, col_info_2 in zip(columns_1, columns_2):
-#                     if col_info_1 != col_info_2:
-#                         html_report += "<p style='color: red;'>Column specifications do not match.</p>"
-#                         html_report += f"<p><b>{col_info_1['column_name']}:</b></p>"
-#                         html_report += f"<p><b>{schema}.<i>{table_name}</i></b></p>"
-#                         html_report += f"<p><b>Specification in First Database:</b> {col_info_1}</p>"
-#                         html_report += f"<p><b>Specification in Second Database:</b> {col_info_2}</p>"
-
-#     html_report += "<hr>"
-
-# html_report += "</body></html>"
-
-# # Save HTML report to a file
-# html_filename = 'schema_comparison_report.html'
-# with open(html_filename, 'w') as html_file:
-#     html_file.write(html_report)
-
-# print(f"Schema comparison report saved to {html_filename}")
-
-#########################
+##
 
 import json
 import openpyxl
