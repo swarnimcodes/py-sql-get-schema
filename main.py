@@ -1,226 +1,130 @@
 import json
 import pyodbc
-import filecmp
-
-# Server Details
-server = '172.16.0.28'
-databases = [ 'DB_PRMITR_ERP_20230701', 'DB_PRMITR_ERP_20230615']
-username = 'Swarnim_Intern'
-password = 'Swarnim14#'
-
-for database in databases:
-    # Establish connection
-    conn = pyodbc.connect(f"DRIVER={{SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}")
-
-    # Create a cursor
-    cursor = conn.cursor()
-
-    # Query to retrieve relevant information
-    table_query = """
-    SELECT
-        t.TABLE_SCHEMA,
-        t.TABLE_NAME,
-        c.COLUMN_NAME,
-        c.DATA_TYPE,
-        c.CHARACTER_MAXIMUM_LENGTH,
-        c.NUMERIC_PRECISION,
-        c.NUMERIC_SCALE
-    FROM INFORMATION_SCHEMA.TABLES AS t
-    JOIN INFORMATION_SCHEMA.COLUMNS AS c ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME
-    WHERE t.TABLE_TYPE = 'BASE TABLE'
-    ORDER BY t.TABLE_SCHEMA, t.TABLE_NAME, c.ORDINAL_POSITION
-    """
-
-    # Execute the query
-    cursor.execute(table_query)
-
-    # Fetch all the results
-    schema_results = cursor.fetchall()
-
-    # Close the cursor and the connection
-    cursor.close()
-    conn.close()
-
-    # Process the results
-    schema_info = {}
-    for row in schema_results:
-        schema, table_name, column_name, data_type, max_length, numeric_precision, numeric_scale = row
-        if schema not in schema_info:
-            schema_info[schema] = {}
-        if table_name not in schema_info[schema]:
-            schema_info[schema][table_name] = []
-        schema_info[schema][table_name].append({
-            'column_name': column_name,
-            'data_type': data_type,
-            'max_length': max_length,
-            'numeric_precision': numeric_precision,
-            'numeric_scale': numeric_scale
-        })
-
-    # Save schema information to a JSON file
-    json_filename = f'schema_information_{database}.json'
-    with open(json_filename, 'w') as json_file:
-        json.dump(schema_info, json_file, indent=4)
-
-    print(f"Schema information for {database} saved to {json_filename}")
-
-# Compare the two schema JSON files
-json_filename_1 = f'schema_information_{databases[0]}.json'
-json_filename_2 = f'schema_information_{databases[1]}.json'
-
-are_files_equal = filecmp.cmp(json_filename_1, json_filename_2)
-if are_files_equal:
-    print("Schemas are identical.")
-else:
-    print("Schemas are not identical.")
-
-## WORKING CODE FOR 2 DBs
-
-# import json
-# import openpyxl
-
-# # Load schema information from JSON files
-# with open(json_filename_1, 'r') as json_file:
-#     schema_info_1 = json.load(json_file)
-
-# with open(json_filename_2, 'r') as json_file:
-#     schema_info_2 = json.load(json_file)
-
-# # Create an Excel workbook and sheet
-# workbook = openpyxl.Workbook()
-# sheet = workbook.active
-# sheet.title = "Schema Comparison"
-
-# # Set headers
-# sheet["A1"] = "Schema"
-# sheet["B1"] = "Table Name"
-# sheet["C1"] = "Type of Error"
-# sheet["D1"] = "Name of Column"
-# sheet["E1"] = f"Source DB: {databases[0]} Specification"
-# sheet["F1"] = f"Test DB: {databases[1]} Specification"
-
-# row = 2  # Start from the second row
-
-# for schema in schema_info_1:
-#     for table_name in schema_info_1[schema]:
-#         columns_1 = schema_info_1[schema][table_name]
-#         columns_2 = schema_info_2[schema].get(table_name, [])
-
-#         for col_info_1 in columns_1:
-#             col_name_1 = col_info_1["column_name"]
-#             col_info_2 = next((col for col in columns_2 if col["column_name"] == col_name_1), None)
-
-#             if col_info_2 is None:
-#                 sheet[f"A{row}"] = schema
-#                 sheet[f"B{row}"] = table_name
-#                 sheet[f"C{row}"] = "Missing Column"
-#                 sheet[f"D{row}"] = col_name_1
-#                 sheet[f"E{row}"] = str(col_info_1)
-#                 sheet[f"F{row}"] = ""
-#                 sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="ffd6ca", end_color="ffd6ca", fill_type="solid")
-#                 row += 1
-#             elif col_info_1 != col_info_2:
-#                 sheet[f"A{row}"] = schema
-#                 sheet[f"B{row}"] = table_name
-#                 sheet[f"C{row}"] = "Different Specification"
-#                 sheet[f"D{row}"] = col_name_1
-#                 sheet[f"E{row}"] = str(col_info_1)
-#                 sheet[f"F{row}"] = str(col_info_2)
-#                 sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="e7d4f2", end_color="e7d4f2", fill_type="solid")
-#                 row += 1
-
-#         for col_info_2 in columns_2:
-#             col_name_2 = col_info_2["column_name"]
-#             col_info_1 = next((col for col in columns_1 if col["column_name"] == col_name_2), None)
-
-#             if col_info_1 is None:
-#                 sheet[f"A{row}"] = schema
-#                 sheet[f"B{row}"] = table_name
-#                 sheet[f"C{row}"] = "Missing Column"
-#                 sheet[f"D{row}"] = col_name_2
-#                 sheet[f"E{row}"] = ""
-#                 sheet[f"F{row}"] = str(col_info_2)
-#                 sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="ffd6ca", end_color="ffd6ca", fill_type="solid")
-#                 row += 1
-
-# # Save the Excel file
-# excel_filename = "schema_comparison_report.xlsx"
-# workbook.save(excel_filename)
-
-# print(f"Schema comparison report saved to {excel_filename}")
-
-
-### MULTI DB
-############
-
-import json
 import openpyxl
+import customtkinter as ctk
+import tkinter as tk
+from tkinter import filedialog
 
-# Load schema information from the source JSON file
-source_database = 'DB_PRMITR_ERP_20230701'
-source_json_filename = f'schema_information_{source_database}.json'
+# Set the appearance mode and color theme for customtkinter
+ctk.set_appearance_mode("system")  # Modes: system (default), light, dark
+ctk.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
 
-with open(source_json_filename, 'r') as json_file:
-    source_schema_info = json.load(json_file)
+def get_database_names():
+    return entry_databases.get().split(',')
 
-# List of target databases
-target_databases = ['DB_PRMITR_ERP_20230615', 'DB_PRMITR_ERP_20230715', 'DB_PRMITR_ERP_20230601']  # Add more databases as needed
+def get_server():
+    return entry_server.get()
 
-# Create an Excel workbook and sheet
-workbook = openpyxl.Workbook()
+def get_username():
+    return entry_username.get()
 
-for target_database in target_databases:
-    sheet = workbook.create_sheet(title=target_database)  # Create a new sheet for each target database
+def get_password():
+    return entry_password.get()
 
-    # Set headers
-    sheet["A1"] = "Schema"
-    sheet["B1"] = "Table"
-    sheet["C1"] = "Type"
-    sheet["D1"] = "Name"
-    sheet["E1"] = f"Specification in {source_database}"
-    sheet["F1"] = f"Specification in {target_database}"
+def perform_schema_comparison(source_database, target_databases):
+    # Server Details
+    server = get_server()
+    username = get_username()
+    password = get_password()
 
-    row = 2  # Start from the second row
+    source_schema_info = None
+    with open(f'schema_information_{source_database}.json', 'r') as json_file:
+        source_schema_info = json.load(json_file)
 
-    target_json_filename = f'schema_information_{target_database}.json'
+    # Create an Excel workbook
+    workbook = openpyxl.Workbook()
 
-    with open(target_json_filename, 'r') as json_file:
-        target_schema_info = json.load(json_file)
+    for target_database in target_databases:
+        sheet = workbook.create_sheet(title=target_database)  # Create a new sheet for each target database
 
-    for schema in source_schema_info:
-        for table_name in source_schema_info[schema]:
-            source_columns = source_schema_info[schema][table_name]
-            target_columns = target_schema_info[schema].get(table_name, [])
+        # Set headers
+        sheet["A1"] = "Schema"
+        sheet["B1"] = "Table Name"
+        sheet["C1"] = "Type of Error"
+        sheet["D1"] = "Column Name"
+        sheet["E1"] = f"Specification in {source_database}"
+        sheet["F1"] = f"Specification in {target_database}"
 
-            for col_info_source in source_columns:
-                col_name_source = col_info_source["column_name"]
-                col_info_target = next((col for col in target_columns if col["column_name"] == col_name_source), None)
+        row = 2  # Start from the second row
 
-                if col_info_target is None:
-                    sheet[f"A{row}"] = schema
-                    sheet[f"B{row}"] = table_name
-                    sheet[f"C{row}"] = "Missing Column"
-                    sheet[f"D{row}"] = col_name_source
-                    sheet[f"E{row}"] = str(col_info_source)
-                    sheet[f"F{row}"] = ""
-                    sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="E6B8B7", end_color="E6B8B7", fill_type="solid")
-                    row += 1
-                elif col_info_source != col_info_target:
-                    sheet[f"A{row}"] = schema
-                    sheet[f"B{row}"] = table_name
-                    sheet[f"C{row}"] = "Different Specification"
-                    sheet[f"D{row}"] = col_name_source
-                    sheet[f"E{row}"] = str(col_info_source)
-                    sheet[f"F{row}"] = str(col_info_target)
-                    sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="CCC0DA", end_color="CCC0DA", fill_type="solid")
-                    row += 1
+        with open(f'schema_information_{target_database}.json', 'r') as json_file:
+            target_schema_info = json.load(json_file)
 
-    print(f"Comparison report generated for {target_database}")
+        for schema in source_schema_info:
+            for table_name in source_schema_info[schema]:
+                source_columns = source_schema_info[schema][table_name]
+                target_columns = target_schema_info[schema].get(table_name, [])
 
-# Save the Excel file
-excel_filename = "schema_comparison_report.xlsx"
-workbook.remove(workbook.active)  # Remove the default sheet
-workbook.save(excel_filename)
+                for col_info_source in source_columns:
+                    col_name_source = col_info_source["column_name"]
+                    col_info_target = next((col for col in target_columns if col["column_name"] == col_name_source), None)
 
-print(f"Schema comparison report saved to {excel_filename}")
+                    if col_info_target is None:
+                        sheet[f"A{row}"] = schema
+                        sheet[f"B{row}"] = table_name
+                        sheet[f"C{row}"] = "Missing Column"
+                        sheet[f"D{row}"] = col_name_source
+                        sheet[f"E{row}"] = str(col_info_source)
+                        sheet[f"F{row}"] = ""
+                        sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="E6B8B7", end_color="E6B8B7", fill_type="solid")
+                        row += 1
+                    elif col_info_source != col_info_target:
+                        sheet[f"A{row}"] = schema
+                        sheet[f"B{row}"] = table_name
+                        sheet[f"C{row}"] = "Different Specification"
+                        sheet[f"D{row}"] = col_name_source
+                        sheet[f"E{row}"] = str(col_info_source)
+                        sheet[f"F{row}"] = str(col_info_target)
+                        sheet[f"C{row}"].fill = openpyxl.styles.PatternFill(start_color="CCC0DA", end_color="CCC0DA", fill_type="solid")
+                        row += 1
 
+        print(f"Comparison report generated for {target_database}")
+
+    # Save the Excel file
+    excel_filename = "schema_comparison_report.xlsx"
+    workbook.remove(workbook.active)  # Remove the default sheet
+    workbook.save(excel_filename)
+
+    print(f"Schema comparison report saved to {excel_filename}")
+
+
+root = ctk.CTk()
+# root.geometry("600x400")
+root.after(0, lambda:root.state('zoomed'))
+root.title("Database Schema Comparer")
+
+label_server = ctk.CTkLabel(master=root, text="Enter Server Address:")
+label_server.place(relx=0.35, rely=0.10, anchor=ctk.CENTER)
+entry_server = ctk.CTkEntry(master=root)
+entry_server.place(relx=0.75, rely=0.10, anchor=ctk.CENTER)
+
+label_source = ctk.CTkLabel(master=root, text="Enter Source Database Name:")
+label_source.place(relx=0.35, rely=0.25, anchor=ctk.CENTER)
+entry_source = ctk.CTkEntry(master=root)
+entry_source.place(relx=0.75, rely=0.25, anchor=ctk.CENTER)
+
+label_databases = ctk.CTkLabel(master=root, text="Enter Target Database Names (comma-separated):")
+label_databases.place(relx=0.35, rely=0.40, anchor=ctk.CENTER)
+entry_databases = ctk.CTkEntry(master=root)
+entry_databases.place(relx=0.75, rely=0.40, anchor=ctk.CENTER)
+
+label_username = ctk.CTkLabel(master=root, text="Enter your username:")
+label_username.place(relx=0.35, rely=0.55, anchor=ctk.CENTER)
+entry_username = ctk.CTkEntry(master=root)
+entry_username.place(relx=0.75, rely=0.55, anchor=ctk.CENTER)
+
+label_password = ctk.CTkLabel(master=root, text="Enter your password:")
+label_password.place(relx=0.35, rely=0.70, anchor=ctk.CENTER)
+entry_password = ctk.CTkEntry(master=root, show="*")
+entry_password.place(relx=0.75, rely=0.70, anchor=ctk.CENTER)
+
+button = ctk.CTkButton(master=root, text="Submit", command=root.quit)  # Using root.quit to close the GUI
+button.place(relx=0.5, rely=0.85, anchor=ctk.CENTER)
+
+root.mainloop()
+
+# After the GUI is closed, the program continues here
+source_database = entry_source.get()
+target_databases = get_database_names()
+
+perform_schema_comparison(source_database, target_databases)
